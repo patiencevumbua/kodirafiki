@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kodi Rafiki - Simulation | TRA Wazo Bunifu</title>
+<style>
+  :root{
+    --tra-blue:#003B71; --tra-blue-2:#0A4E8F; --tra-gold:#F6B221;
+    --wa-green:#075E54; --wa-bubble:#DCF8C6; --wa-bg:#ECE5DD;
+    --ink:#1c1c1e; --muted:#6b7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; background:#eef2f7; color:var(--ink); padding-bottom:64px;}
+  header{background:var(--tra-blue); color:#fff; padding:24px 16px 18px; text-align:center; border-bottom:5px solid var(--tra-gold);}
+  header h1{font-size:26px; letter-spacing:.5px;}
+  header h1 span{color:var(--tra-gold);}
+  header p{opacity:.9; margin-top:6px; font-size:14px;}
+  header .tag{font-style:italic; font-size:14.5px; margin-top:9px; color:var(--tra-gold);}
+  .note{max-width:980px; margin:14px auto 0; text-align:center; font-size:13px; color:var(--muted); padding:0 14px;}
+  .note b{color:var(--tra-blue);}
+  .phones{display:flex; flex-wrap:wrap; gap:26px; justify-content:center; padding:26px 12px; max-width:1200px; margin:0 auto;}
+  .phone{width:335px; background:#0d1b2e; border-radius:36px; padding:12px; box-shadow:0 14px 34px rgba(0,30,60,.28);}
+  .screen{background:#fff; border-radius:26px; overflow:hidden; height:640px; display:flex; flex-direction:column; position:relative;}
+  /* phone notification banner */
+  .notif{position:absolute; top:8px; left:8px; right:8px; background:#1f2937f2; color:#fff; border-radius:14px; padding:10px 12px; display:flex; gap:10px; z-index:6; box-shadow:0 8px 22px rgba(0,0,0,.4); animation:slideDown .45s ease;}
+  .notif .ic{width:34px; height:34px; border-radius:8px; background:var(--wa-green); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; flex-shrink:0; font-size:13px;}
+  .notif .nt{font-size:12px; line-height:1.4;}
+  .notif .nt b{display:block; font-size:12.5px;}
+  @keyframes slideDown{from{transform:translateY(-130%); opacity:0;} to{transform:none; opacity:1;}}
+  @keyframes slideUp{from{transform:none; opacity:1;} to{transform:translateY(-130%); opacity:0;}}
+  .notif.hide{animation:slideUp .4s ease forwards;}
+  .p-head{padding:12px 14px; color:#fff; display:flex; align-items:center; gap:10px;}
+  .pill{margin-left:auto; background:var(--tra-gold); color:var(--tra-blue); font-weight:800; font-size:12px; border-radius:14px; padding:4px 10px; white-space:nowrap;}
+  /* award (points) bubble */
+  .award{align-self:center; max-width:92%; background:linear-gradient(135deg,#fff8e1,#ffefc2); border:1.5px solid var(--tra-gold); border-radius:12px; padding:9px 13px; font-size:12.5px; color:#5c4300; text-align:center; box-shadow:0 2px 6px rgba(180,130,0,.18); animation:pop .3s ease; white-space:pre-line;}
+  .award b{color:#8a5a00;}
+  /* tuzo ladder card */
+  .tuzo{align-self:flex-start; max-width:94%; background:#fff; border:1px solid #d7dce6; border-radius:12px; overflow:hidden; font-size:12.5px; box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .tuzo .tz-h{background:var(--tra-blue); color:#fff; padding:7px 12px; font-weight:700; font-size:12.5px; border-bottom:3px solid var(--tra-gold);}
+  .tuzo .trow{display:flex; justify-content:space-between; gap:8px; padding:7px 12px; border-top:1px solid #eef1f5; align-items:center;}
+  .tuzo .trow .tn{font-weight:700;}
+  .tuzo .trow .tu{font-size:11px; color:var(--muted); flex:1; text-align:right;}
+  .tuzo .trow.now{background:#fff8e1; border-left:4px solid var(--tra-gold);}
+  .tuzo .tz-f{padding:7px 12px; background:#fffdf5; color:var(--muted); font-size:11px; border-top:1px solid #eef1f5;}
+  .p-head .avatar{width:36px;height:36px;border-radius:50%;background:#ffffff33;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:15px;}
+  .p-head .t{font-size:15px;font-weight:600;}
+  .p-head .s{font-size:11px;opacity:.85;}
+  .chat{flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px;}
+  .bubble{max-width:86%; padding:9px 12px; border-radius:12px; font-size:13.5px; line-height:1.45; white-space:pre-line; box-shadow:0 1px 1px rgba(0,0,0,.08); animation:pop .22s ease;}
+  @keyframes pop{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .in{align-self:flex-start; background:#fff;}
+  .out{align-self:flex-end;}
+  .gloss{display:block; margin-top:6px; font-size:11px; color:var(--muted); font-style:italic; border-top:1px dashed #d0d5dd; padding-top:5px;}
+  .typing{align-self:flex-start; background:#fff; color:#98a2b3; border-radius:12px; padding:8px 14px; font-size:16px; letter-spacing:3px; box-shadow:0 1px 1px rgba(0,0,0,.08);}
+  /* inline menus (clickable) */
+  .menu-btns{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
+  .menu-btns span{border:1.5px solid var(--tra-gold); border-radius:9px; padding:7px 9px; font-size:12.5px; color:var(--tra-blue); background:#fffdf5; text-align:center; cursor:pointer; font-weight:600; transition:all .12s;}
+  .menu-btns span:hover{background:var(--tra-gold); color:var(--tra-blue);}
+  .menu-btns span.dead{opacity:.45; cursor:default; border-color:#d0d5dd; color:var(--muted); background:#f7f7f8; font-weight:400;}
+  .menu-btns span.chosen{background:var(--tra-blue); color:#fff; border-color:var(--tra-blue);}
+  /* footer choice chips */
+  .p-foot{padding:9px 10px; border-top:1px solid #e5e7eb; background:#f7f9fc; min-height:56px;}
+  .inputrow{display:none; gap:6px; margin-bottom:8px;}
+  .inputrow.show{display:flex; animation:pop .25s ease;}
+  .inputrow input{flex:1; border:1.5px solid #c8ceda; border-radius:18px; padding:9px 13px; font-size:13px; outline:none; font-family:inherit;}
+  .inputrow input:focus{border-color:var(--tra-gold);}
+  .inputrow button{border:0; border-radius:50%; width:38px; height:38px; background:var(--tra-blue); color:#fff; font-size:16px; cursor:pointer; flex-shrink:0;}
+  .inputrow button:hover{background:var(--tra-blue-2);}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; justify-content:center;}
+  .chip{border:1.5px solid var(--tra-gold); background:#fff; color:var(--tra-blue); border-radius:18px; padding:8px 13px; font-size:12.5px; font-weight:700; cursor:pointer; transition:all .12s; animation:pop .25s ease;}
+  .chip:hover{background:var(--tra-gold);}
+  .chip.reset-chip{border-color:#c8ceda; color:var(--muted); font-weight:500;}
+  .waiting{color:#98a2b3; font-size:12px; text-align:center; padding-top:9px;}
+  /* calendar card */
+  .cal{align-self:flex-start; max-width:94%; background:#fff; border:1px solid #d7dce6; border-radius:12px; overflow:hidden; font-size:12.5px; box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .cal .cal-h{background:var(--tra-blue); color:#fff; padding:7px 12px; font-weight:700; font-size:12.5px; border-bottom:3px solid var(--tra-gold);}
+  .cal .row{display:flex; justify-content:space-between; gap:10px; padding:6px 12px; border-top:1px solid #eef1f5;}
+  .cal .row b{font-weight:600;}
+  .cal .ok{color:#0b7a3b; font-weight:700;}
+  .cal .due{color:#b45309; font-weight:700;}
+  .cal .cal-f{padding:6px 12px; background:#fffdf5; color:var(--muted); font-size:11px; border-top:1px solid #eef1f5;}
+  /* whatsapp skin */
+  .wa .p-head{background:var(--wa-green);}
+  .wa .chat{background:var(--wa-bg);}
+  .wa .out{background:var(--wa-bubble);}
+  /* sms skin */
+  .sms .p-head{background:var(--tra-blue-2);}
+  .sms .chat{background:#f6f8fb;}
+  .sms .out{background:#d7e7ff;}
+  .sysline{align-self:center; font-size:10.5px; color:var(--muted); background:#eef1f5; border-radius:10px; padding:3px 10px; text-align:center; max-width:92%;}
+  /* voice skin */
+  .voice .p-head{background:#0b7a3b;}
+  .voice .chat{background:#0e1524;}
+  .voice .in{background:#1c2740; color:#e8edf7;}
+  .voice .out{background:#0b7a3b; color:#fff;}
+  .voice .gloss{color:#9fb0cc; border-top-color:#2b3a5c;}
+  .voice .callbar{background:#0e1524; color:#9fb0cc; text-align:center; font-size:12px; padding:6px 0;}
+  .voice .sysline{background:#1c2740; color:#9fb0cc;}
+  .voice .typing{background:#1c2740; color:#9fb0cc;}
+  /* impact-area coverage panel */
+  .coverage{max-width:1150px; margin:6px auto 30px; padding:0 14px;}
+  .coverage h2{text-align:center; color:var(--tra-blue); font-size:19px; margin-bottom:4px;}
+  .coverage .sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:16px;}
+  .cov-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:12px;}
+  .cov{background:#fff; border:1px solid #dde3ec; border-left:5px solid var(--tra-gold); border-radius:12px; padding:12px 14px; box-shadow:0 2px 8px rgba(0,30,60,.06);}
+  .cov h3{font-size:13.5px; color:var(--tra-blue); margin-bottom:5px;}
+  .cov h3 .tick{color:#0b7a3b; margin-right:6px;}
+  .cov p{font-size:12.5px; color:#374151; line-height:1.5;}
+  .cov p b{color:var(--tra-blue);}
+  .label{max-width:335px; text-align:center; font-size:13px; color:var(--muted); margin-top:9px;}
+  .label b{color:var(--tra-blue);}
+  .col{display:flex; flex-direction:column; align-items:center;}
+  footer{position:fixed; bottom:0; left:0; right:0; background:var(--tra-blue); color:#fff; font-size:12px; text-align:center; padding:9px; border-top:3px solid var(--tra-gold);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KODI <span>RAFIKI</span></h1>
+  <p>One AI tax companion. Every phone in Tanzania. In Swahili.</p>
+  <div class="tag">"Ukiuza toa risiti, ukinunua dai risiti - Pamoja Tunajenga Taifa Letu"</div>
+</header>
+<div class="note"><b>Interactive simulation</b> - tap the menus and replies on each phone to drive the conversation yourself, exactly as a taxpayer would. Prepared for the TRA Wazo Bunifu Innovation Challenge, Phase 2. No real taxpayer data.</div>
+
+<div class="phones">
+
+  <!-- WHATSAPP -->
+  <div class="col">
+    <div class="phone">
+      <div class="screen wa">
+        <div class="p-head"><div class="avatar">KR</div><div><div class="t">Kodi Rafiki</div><div class="s">TRA verified &middot; online</div></div><div class="pill">🏅 <span id="wa-pts">0</span></div></div>
+        <div class="chat" id="wa-chat"></div>
+        <div class="p-foot">
+          <div class="inputrow" id="wa-inputrow">
+            <input id="wa-input" type="text" placeholder="Au andika swali lako lolote hapa..." onkeydown="if(event.key==='Enter')askRag()">
+            <button onclick="askRag()" title="Tuma">&#10148;</button>
+          </div>
+          <div class="chips" id="wa-chips"></div>
+        </div>
+      </div>
+    </div>
+    <div class="label"><b>WhatsApp</b> - smartphone users:<br>ask, register, pay - and <b>earn Alama za Uzalendo</b>:<br>Shaba &rarr; Fedha &rarr; Dhahabu &rarr; Tuzo ya Rais 🏆</div>
+  </div>
+
+  <!-- SMS -->
+  <div class="col">
+    <div class="phone">
+      <div class="screen sms">
+        <div class="p-head"><div class="avatar">&#9993;</div><div><div class="t">KODI &middot; 15XXX</div><div class="s">SMS - any phone, no internet</div></div></div>
+        <div class="chat" id="sms-chat"></div>
+        <div class="p-foot"><div class="chips" id="sms-chips"></div></div>
+      </div>
+    </div>
+    <div class="label"><b>SMS</b> - every other phone:<br>offline receipts, balance, <b>escalating reminders</b></div>
+  </div>
+
+  <!-- VOICE -->
+  <div class="col">
+    <div class="phone">
+      <div class="screen voice">
+        <div class="p-head"><div class="avatar">&#128222;</div><div><div class="t">Kodi Rafiki - Simu</div><div class="s">Voice call &middot; Swahili</div></div></div>
+        <div class="callbar" id="v-timer">&#9679; 00:00</div>
+        <div class="chat" id="v-chat"></div>
+        <div class="p-foot"><div class="chips" id="v-chips"></div></div>
+      </div>
+    </div>
+    <div class="label"><b>Voice</b> - those who cannot read:<br>speak naturally; <b>the reminder that calls you</b></div>
+  </div>
+
+</div>
+
+<section class="coverage">
+  <h2>Impact Areas Covered &mdash; and Where to See Each One in This Simulation</h2>
+  <div class="sub">The six impact areas selected in the submission, each demonstrated live above.</div>
+  <div class="cov-grid">
+    <div class="cov"><h3><span class="tick">&#10004;</span>Adopt to the leading work practices, trends and technology</h3>
+      <p><b>See it:</b> WhatsApp &rarr; menu E &mdash; every answer is retrieved from TRA's own documents and cites the section (📄 <i>Chanzo</i>). Type an off-topic question and watch the system <b>refuse to invent an answer</b>. Retrieval-based Swahili AI, hosted in Tanzania.</p></div>
+    <div class="cov"><h3><span class="tick">&#10004;</span>Compliance Costs</h3>
+      <p><b>See it:</b> all three phones &mdash; the trader complies from the phone they already own, in Swahili: no device to buy, no travel, no agent fees. <i>Akiba ya Kodi</i> turns TZS 600,000 into <b>TZS 1,700 a day</b>, and the SMS inbox keeps every record free of charge.</p></div>
+    <div class="cov"><h3><span class="tick">&#10004;</span>Expand tax base</h3>
+      <p><b>See it:</b> WhatsApp menu A, or the voice phone ("Sijajisajili bado") &mdash; <b>TIN registration in one conversation</b>, needing only NIDA, with first-year relief as the welcome. Receipt codes (menu D / SMS <i>RISITI</i>) make every buyer a reason for the next trader to register.</p></div>
+    <div class="cov"><h3><span class="tick">&#10004;</span>Improve service delivery</h3>
+      <p><b>See it:</b> the SMS phone (works on any handset, offline receipts at the lake shore) and the voice phone (a non-literate carpenter served entirely by speech, with an SMS record after every call). Populations no current TRA digital service can reach &mdash; served 24/7.</p></div>
+    <div class="cov"><h3><span class="tick">&#10004;</span>Minimize revenue collection costs</h3>
+      <p><b>See it:</b> the WhatsApp notification and the reminder that <b>calls</b> the carpenter &mdash; automated follow-up replacing manual block management. The mechanism was measured in Dar es Salaam: <b>+18% payment at a 36:1 benefit-cost ratio</b>.</p></div>
+    <div class="cov"><h3><span class="tick">&#10004;</span>Revenue Collection</h3>
+      <p><b>See it:</b> every payment moment above &mdash; a <b>GePG control number issued inside the conversation</b>, paid instantly by M-Pesa with the trader's own PIN, plus <i>Tuzo ya Uzalendo</i> lottery tickets making buyers demand receipts. Collection becomes the path of least resistance.</p></div>
+  </div>
+</section>
+
+<footer>Kodi Rafiki &middot; Simulation for TRA Wazo Bunifu Phase 2 &middot; Submitted by Ivetha Abella Richard &middot; The agent never asks for a PIN or password</footer>
+
+<script>
+/* ================= FLOWS (branching state machines) ================= */
+const flows = {
+
+wa: { start:'s0', nodes:{
+  s0:{ msgs:[], choices:[{label:'Hello 👋', next:'lang'}] },
+  lang:{ msgs:[
+      {w:'in', t:'Karibu Kodi Rafiki - msaidizi wako wa kodi (TRA).\nChagua lugha / Choose language:', menu:['Kiswahili','English']}
+    ], choices:[{label:'Kiswahili', next:'main'},{label:'English', next:'eng'}] },
+  eng:{ msgs:[
+      {w:'sys', t:'The live system serves both languages - this demo continues in Kiswahili.'}
+    ], choices:[{label:'Sawa, endelea kwa Kiswahili', next:'main'}] },
+  main:{ msgs:[
+      {w:'in', t:'Asante! Chagua huduma:', menu:['A. Jisajili TIN','B. Deni na ratiba yangu','C. Nipigie - nielezwe kwa sauti','D. Pata risiti','E. Uliza swali la kodi','F. Tuzo zangu']}
+    ], choices:[
+      {label:'A. Jisajili TIN', next:'reg0'},
+      {label:'B. Deni na ratiba yangu', next:'cal'},
+      {label:'C. Nipigie - nielezwe kwa sauti', next:'call'},
+      {label:'D. Pata risiti', next:'receipts'},
+      {label:'E. Uliza swali la kodi', next:'maswali'},
+      {label:'F. Tuzo zangu', next:'tuzo'}
+    ] },
+  tuzo:{ msgs:[
+      {w:'in', t:'🏅 Hii hapa hali yako ya TUZO YA UZALENDO:'},
+      {w:'tuzo'}
+    ], choices:[{label:'↩ Rudi menyu', next:'main'}] },
+  maswali:{ msgs:[
+      {w:'in', t:'Uliza kwa maneno yako mwenyewe - mfumo unasoma sheria na kukujibu kwa kunukuu kifungu husika. Maswali ya mfano:', menu:['1. Nauza kama milioni 15 kwa mwaka - nitalipa kiasi gani?','2. Ni kweli mwaka wa kwanza silipi kodi?','3. VAT inaanza mauzo gani?','4. Tuzo ya Uzalendo ni nini?','5. Hali ya hewa Dodoma? (jaribu kunitega!)']}
+    ], choices:[
+      {label:'1. Nauza kama milioni 15 kwa mwaka - nitalipa kiasi gani?', next:'q'},
+      {label:'2. Ni kweli mwaka wa kwanza silipi kodi?', next:'qRelief'},
+      {label:'3. VAT inaanza mauzo gani?', next:'qVat'},
+      {label:'4. Tuzo ya Uzalendo ni nini?', next:'qTuzo'},
+      {label:'5. Hali ya hewa Dodoma? (jaribu kunitega!)', next:'qUnknown'}
+    ] },
+  q:{ msgs:[
+      {w:'in', t:'Kwa mauzo ya TZS 15,000,000 kwa mwaka uko kwenye KODI YA MAKADIRIO.\n\nKodi yako: 4% ya mauzo = TZS 600,000 kwa mwaka.\n\nKwa AKIBA YA KODI ni TZS 1,700 tu kwa siku.\n\nNa kwa usajili mpya - MWAKA WA KWANZA HULIPI.\n\n📄 Chanzo: Sheria ya Fedha 2026; Jedwali la Kwanza la Sheria ya Kodi ya Mapato.', g:'The exact worked example from the proposal: 4% = TZS 600,000/yr ≈ TZS 1,700/day, first-year relief - every figure citing the law.'}
+    ], choices:[{label:'Ndiyo, nisajili sasa', next:'reg'},{label:'↩ Maswali mengine', next:'maswali'},{label:'↩ Rudi menyu', next:'main'}] },
+  qRelief:{ msgs:[
+      {w:'in', t:'Ndiyo, ni kweli! Usajili MPYA wa kodi ya makadirio unapata UNAFUU WA MWAKA WA KWANZA, kuanzia tarehe ya kupata TIN.\n\n📄 Chanzo: Sheria ya Fedha 2026 (nakala iliyogazetiwa).', g:'Retrieved and cited: the Finance Act 2026 first-year relief - the incentive that already exists in law.'}
+    ], choices:[{label:'Ndiyo, nisajili sasa', next:'reg'},{label:'↩ Maswali mengine', next:'maswali'},{label:'↩ Rudi menyu', next:'main'}] },
+  qVat:{ msgs:[
+      {w:'in', t:'Usajili wa VAT unaanza mauzo ya TZS milioni 200 kwa mwaka (Tanzania Bara).\n\n📄 Chanzo: Sheria ya VAT, kifungu cha usajili.', g:'Retrieved and cited: the VAT registration threshold, Mainland.'}
+    ], choices:[{label:'↩ Maswali mengine', next:'maswali'},{label:'↩ Rudi menyu', next:'main'}] },
+  qTuzo:{ msgs:[
+      {w:'in', t:'TUZO YA UZALENDO ni bahati nasibu ya TRA: kila risiti unayotoa (au kudai ukiwa mnunuzi) inakupa tiketi.\n\nUkiuza toa risiti, ukinunua dai risiti!\n\n📄 Chanzo: Tangazo la TRA / Bajeti 2026/27.', g:'Retrieved and cited: the receipt lottery - every receipt is a ticket, for seller and buyer alike.'}
+    ], choices:[{label:'↩ Maswali mengine', next:'maswali'},{label:'↩ Rudi menyu', next:'main'}] },
+  qUnknown:{ msgs:[
+      {w:'in', t:'Samahani - jibu la swali hili HALIPO kwenye nyaraka za TRA nilizopewa, hivyo siwezi kubuni jibu.\n\nPiga simu bila malipo, Huduma kwa Mteja TRA: 0800 780 078.', g:'THE HONEST REFUSAL: outside the corpus, the system declines to invent an answer and refers to TRA. The core safety promise - "TRA uploads the law, the AI only reads it back" - demonstrated.'}
+    ], choices:[{label:'↩ Maswali mengine', next:'maswali'},{label:'↩ Rudi menyu', next:'main'}] },
+  reg0:{ msgs:[
+      {w:'in', t:'Vizuri! Ili nikusajili, nahitaji namba yako ya NIDA tu.'}
+    ], choices:[{label:'NIDA: 1990XXXXXXXXXX23', next:'reg1'}] },
+  reg:{ msgs:[
+      {w:'in', t:'Vizuri! Ili nikusajili, nahitaji namba yako ya NIDA tu.'}
+    ], choices:[{label:'NIDA: 1990XXXXXXXXXX23', next:'reg1'}] },
+  reg1:{ msgs:[
+      {w:'in', t:'Hongera! 🎉 TIN yako mpya: 123-456-789.\n\nRatiba yako ya kodi imeundwa. Leo unaweza kuanza na TZS 1,700.\n\nNamba ya malipo (GePG): 991234567890\nLipa kwa M-Pesa > Malipo ya Serikali.', g:'Registered in one conversation. GePG control number issued in-chat. She pays with her own PIN - the agent never touches her wallet.'},
+      {w:'award', pts:10, reason:'Kujisajili TIN'}
+    ], choices:[{label:'Nimelipa ✅', next:'paid'}] },
+  paid:{ msgs:[
+      {w:'in', t:'Malipo yamepokelewa: TZS 1,700 ✅\nDeni lililobaki mwaka huu: TZS 598,300.\nUmepata tiketi 1 ya TUZO YA UZALENDO!', g:'Payment confirmed, balance tracked, lottery ticket earned.'},
+      {w:'award', pts:5, reason:'Malipo kwa wakati'}
+    ], choices:[{label:'RATIBA 📅', next:'cal'},{label:'↩ Rudi menyu', next:'main'}] },
+  cal:{ msgs:[
+      {w:'in', t:'📅 Hii hapa ratiba yako:', cal:{h:'RATIBA YANGU YA KODI - Julai 2026', rows:[
+          ['Jana 15 Julai','TZS 1,700','ok'],
+          ['Leo 16 Julai','TZS 1,700','ok'],
+          ['Kesho 17 Julai','TZS 1,700','due'],
+          ['Deni lililobaki','TZS 596,600','due'],
+          ['Ritani ya makadirio','31 Desemba 2026','due']
+        ], f:'Nitakukumbusha kila siku saa 12 asubuhi. Andika ACHA ukitaka kusitisha vikumbusho.'},
+        g:'Her full tax calendar: paid days, today, tomorrow, annual balance, filing deadline - reminders she can stop anytime.'}
+    ], choices:[{label:'⏰ Ona kumbusho la kesho (demo)', next:'rem'},{label:'↩ Rudi menyu', next:'main'}] },
+  rem:{ msgs:[
+      {w:'sys', t:'Kesho saa 12 asubuhi - The next morning, 6:00 am. Her phone buzzes:'},
+      {w:'notif', title:'Kodi Rafiki (TRA)', t:'⏰ KUMBUSHO: Kodi ya leo TZS 1,700 - jibu LIPA'},
+      {w:'in', t:'⏰ KUMBUSHO: Kodi ya leo ni TZS 1,700.\nDeni lililobaki mwaka huu: TZS 596,600.\nJibu LIPA kupata namba ya malipo.', g:'The proven nudge, arriving as a real notification: a Dar es Salaam trial measured +18% payment at a 36:1 benefit-cost ratio from reminders like this.'}
+    ], choices:[{label:'LIPA', next:'lipa'},{label:'↩ Rudi menyu', next:'main'}] },
+  lipa:{ msgs:[
+      {w:'in', t:'Namba ya malipo (GePG): 991234567891 - TZS 1,700.\nLipa kwa M-Pesa > Malipo ya Serikali. Ukilipa, nitakutumia uthibitisho hapa hapa.', g:'Control number in-chat; she authorises with her own PIN.'}
+    ], choices:[{label:'↩ Rudi menyu', next:'main'}] },
+  call:{ msgs:[
+      {w:'sys', t:'📞 Simu inakuja ndani ya dakika - see the VOICE phone on the right: this is exactly what happens next. The session continues there and back here, with nothing repeated.'}
+    ], choices:[{label:'↩ Rudi menyu', next:'main'}] },
+  receipts:{ msgs:[
+      {w:'in', t:'Umepokea kitabu cha risiti: TZ-8810-A1 hadi TZ-8810-A20.\nZinatumika hata BILA MTANDAO - zitatumwa TRA mtandao utakaporudi.', g:'20 pre-signed receipt codes that work with zero network - the mechanism TRA’s own VFD rules already define.'},
+      {w:'award', pts:2, reason:'Kuchukua kitabu cha risiti'}
+    ], choices:[{label:'↩ Rudi menyu', next:'main'}] }
+}},
+
+sms: { start:'s0', nodes:{
+  s0:{ msgs:[{w:'sys', t:'Any phone. No internet. No app. She texts one word:'}], choices:[{label:'KODI', next:'lang'}] },
+  lang:{ msgs:[
+      {w:'in', t:'Karibu KODI RAFIKI (TRA). Jibu:\n1 Kiswahili\n2 English', menu:['1 Kiswahili','2 English']}
+    ], choices:[{label:'1 Kiswahili', next:'main'},{label:'2 English', next:'main'}] },
+  main:{ msgs:[
+      {w:'in', t:'Asante! Uliza swali lolote, au andika:', menu:['RISITI - vitabu vya risiti','DENI - salio lako','LIPA - namba ya malipo','NIPIGIE - tukupigie simu']}
+    ], choices:[
+      {label:'RISITI', next:'risiti'},
+      {label:'DENI', next:'deni'},
+      {label:'LIPA', next:'lipa'},
+      {label:'NIPIGIE', next:'nipigie'}
+    ] },
+  risiti:{ msgs:[
+      {w:'in', t:'Umepokea kitabu cha risiti TZ-4471-K1 hadi TZ-4471-K20.\nZinatumika hata BILA MTANDAO ukiwa ziwani. Zitatumwa TRA mtandao utakaporudi.', g:'20 pre-signed receipt codes by SMS - they work with zero network at the lake shore.'},
+      {w:'sys', t:'Ziwani - hakuna mtandao. She writes TZ-4471-K9 on the buyer’s slip.'},
+      {w:'sys', t:'Jioni - mtandao umerudi. Phone syncs automatically.'},
+      {w:'in', t:'Risiti TZ-4471-K9 (TZS 45,000) imepokelewa TRA ✓\nMnunuzi amethibitisha kwa SMS - amepata tiketi ya TUZO YA UZALENDO.\n\nMauzo ya wiki: TZS 180,000. Kodi ya leo: TZS 700.', g:'Receipt reconciled with TRA; buyer verified it and entered the lottery; running total tracked.'}
+    ], choices:[{label:'LIPA', next:'lipa'},{label:'↩ Menyu', next:'main'}] },
+  deni:{ msgs:[
+      {w:'in', t:'Hii hapa hali yako ya kodi:', cal:{h:'DENI & RATIBA - Julai 2026', rows:[
+          ['Kodi ya leo','TZS 700','due'],
+          ['Umelipa wiki hii','TZS 2,100','ok'],
+          ['Deni lililobaki','TZS 208,600','due']
+        ], f:'Vikumbusho kila siku. Andika ACHA ukitaka kusitisha.'},
+        g:'Balance and schedule on a feature phone - and it stays in the inbox.'}
+    ], choices:[{label:'LIPA', next:'lipa'},{label:'↩ Menyu', next:'main'}] },
+  lipa:{ msgs:[
+      {w:'in', t:'Namba ya malipo (GePG): 991234567777 - TZS 700.\nLipa kwa M-Pesa > Malipo ya Serikali.\n\nKumbuka: ujumbe huu unabaki kwenye kikasha chako cha meseji - hili ndilo faili lako la kodi.', g:'"This message stays in your inbox - this is your tax file." Every code, number and balance persists.'}
+    ], choices:[{label:'⏰ Siku 2 baadaye... (demo ya kumbusho)', next:'rem'},{label:'↩ Menyu', next:'main'}] },
+  rem:{ msgs:[
+      {w:'sys', t:'Siku mbili baadaye hajalipa - Two days later, unpaid'},
+      {w:'in', t:'⏰ KUMBUSHO: Siku 2 hujalipa. Deni: TZS 2,100.\nJibu LIPA sasa, au andika NIPIGIE ili tukupigie tukusaidie.', g:'Reminders escalate politely: SMS first - and if she prefers, the agent will call. Never a penalty notice as the first contact.'}
+    ], choices:[{label:'LIPA', next:'rem2'},{label:'NIPIGIE', next:'nipigie'}] },
+  rem2:{ msgs:[
+      {w:'in', t:'Namba ya malipo (GePG): 991234567778 - TZS 2,100.\nUkilipa leo, ratiba yako inarudi sawa ✓', g:'One reply and she is back on schedule. Compliance stays a habit, not a debt.'}
+    ], choices:[{label:'↩ Menyu', next:'main'}] },
+  nipigie:{ msgs:[
+      {w:'sys', t:'📞 The agent calls her back within moments - see the VOICE phone: that is the call. Same session, nothing repeated.'}
+    ], choices:[{label:'↩ Menyu', next:'main'}] }
+}},
+
+v: { start:'s0', nodes:{
+  s0:{ msgs:[{w:'sys', t:'He chose NIPIGIE. First an SMS reference code announces the call - so he knows it is really TRA. Then his phone rings:'}],
+       choices:[{label:'📞 Pokea simu (Answer)', next:'hello', call:true}] },
+  hello:{ msgs:[
+      {w:'in', t:'🔊 "Habari, Bwana Juma! Hii ni Kodi Rafiki ya TRA - kumbukumbu namba K-7712, kama ilivyo kwenye SMS yako. Karibu - ongea tu kama kawaida. Unaweza kuripoti mauzo, kuuliza utaratibu, au kulipa kodi."', g:'"Hello Mr Juma - reference K-7712, matching your SMS." Pre-announced, verifiable, never asks for a PIN.'}
+    ], choices:[
+      {label:'🎤 "Nimeuza makabati matatu leo, laki tatu."', next:'sale', gloss:'"I sold three cabinets today, three hundred thousand."'},
+      {label:'🎤 "Nataka kulipa kodi - utaratibu ukoje?"', next:'proc', gloss:'"I want to pay tax - what is the procedure?"'},
+      {label:'🎤 "Sijajisajili bado - nianzeje?"', next:'procreg', gloss:'"I have not registered yet - how do I start?"'}
+    ] },
+  proc:{ msgs:[
+      {w:'in', t:'🔊 "Utaratibu wa kulipa ni rahisi sana. Nikueleze hatua nne:\n\nMOJA - nitakuambia deni lako la leo.\nMBILI - nitakutumia namba ya malipo ya serikali (GePG) kwa SMS.\nTATU - ombi la M-Pesa litakuja kwenye simu yako; utaweka PIN yako MWENYEWE.\nNNE - utapokea SMS ya uthibitisho - hiyo ndiyo risiti yako.\n\nHakuna fomu, hakuna kwenda ofisini, hakuna foleni."', g:'The full payment procedure, spoken in four steps: liability → control number → own-PIN authorisation → SMS record. No forms, no office, no queue.'},
+      {w:'in', t:'🔊 "Ungependa nikusaidie kulipa sasa hivi, tukiwa kwenye simu hii hii?"', g:'"Would you like me to help you pay right now, on this same call?"'}
+    ], choices:[
+      {label:'🎤 "Ndiyo, twende."', next:'balance'},
+      {label:'🎤 "Hapana, nilitaka kujua tu."', next:'proclater'}
+    ] },
+  proclater:{ msgs:[
+      {w:'in', t:'🔊 "Sawa kabisa! Nipo siku yoyote utakapokuwa tayari. Nakutumia SMS yenye hatua hizo nne ili uzihifadhi. Kwaheri!"', g:'His pace is respected - and the four steps arrive by SMS so he keeps them.'},
+      {w:'sys', t:'✉ SMS arrives with the four payment steps - a written record of the spoken procedure.'}
+    ], choices:[{label:'☎ Maliza simu', next:'end'}] },
+  balance:{ msgs:[
+      {w:'in', t:'🔊 "Vizuri! Deni lako la leo ni TZS 1,650 - elfu moja mia sita hamsini. Tuendelee?"', g:'Step one of the procedure, live: the agent states his balance aloud.'}
+    ], choices:[{label:'🎤 "Ndiyo."', next:'pay'},{label:'🎤 "Hapana, baadaye."', next:'later'}] },
+  procreg:{ msgs:[
+      {w:'in', t:'🔊 "Karibu sana! Kujisajili ni BURE na tunaweza kumaliza sasa hivi kwenye simu hii. Nahitaji kitu kimoja tu: namba yako ya NIDA. Ukishasajiliwa, MWAKA WA KWANZA HULIPI chochote."', g:'Registration is free, by voice, needing only NIDA - and the first-year relief is the reason to say yes today.'}
+    ], choices:[
+      {label:'🎤 "NIDA yangu ni 1990XXXXXXXXXX23."', next:'regv'},
+      {label:'🎤 "Sina NIDA bado."', next:'nonida'}
+    ] },
+  regv:{ msgs:[
+      {w:'in', t:'🔊 "Hongera, Bwana Juma! TIN yako mpya ni 123-456-789. Nakutumia SMS yenye TIN yako na ratiba yako ya kodi. Mwaka huu wa kwanza hulipi - na mwakani, kodi yako itakuwa kidogo kidogo kila siku, si mzigo mmoja."', g:'Registered BY VOICE in one call. TIN + calendar arrive by SMS. First year: relief. After that: daily instalments, never a lump sum.'},
+      {w:'sys', t:'✉ SMS: "TIN yako: 123-456-789 ✓ Mwaka wa kwanza: unafuu. Karibu TRA!"'}
+    ], choices:[{label:'☎ Maliza simu', next:'end'},{label:'🎤 "Utaratibu wa kulipa ukoje?"', next:'proc'}] },
+  nonida:{ msgs:[
+      {w:'in', t:'🔊 "Hakuna shida. Tembelea ofisi ya NIDA iliyo karibu nawe kwanza - ni bure. Utakapoipata, piga tena au andika NIPIGIE - tutamaliza usajili kwa dakika mbili tu. Nakutumia SMS yenye maelekezo."', g:'The honest edge case: no NIDA means NIDA first. Clear directions, by SMS, and an open door to return.'}
+    ], choices:[{label:'☎ Maliza simu', next:'end'}] },
+  sale:{ msgs:[
+      {w:'in', t:'🔊 "Nimeandika: makabati 3, TZS 300,000. Kodi ya leo ni TZS 1,650. Ungependa kulipa sasa kwa M-Pesa yako?"', g:'Sale recorded aloud. Today’s instalment: TZS 1,650.'}
+    ], choices:[{label:'🎤 "Ndiyo."', next:'confirm'},{label:'🎤 "Hapana, baadaye."', next:'later'}] },
+  later:{ msgs:[
+      {w:'in', t:'🔊 "Sawa kabisa. Nitakukumbusha kesho asubuhi. Kwaheri, Bwana Juma!"', g:'His choice is respected - the reminder is scheduled instead.'},
+      {w:'sys', t:'✉ SMS record arrives anyway: sale logged, nothing owed today.'}
+    ], choices:[{label:'⏰ Kesho: kumbusho kwa simu (demo)', next:'remcall'},{label:'☎ Maliza simu', next:'end'}] },
+  confirm:{ msgs:[
+      {w:'in', t:'🔊 "Nathibitisha: TZS 1,650 - elfu moja mia sita hamsini. Sema NDIYO kukubali."', g:'Every figure is read back before anything happens.'}
+    ], choices:[{label:'🎤 "Ndiyo."', next:'pay'}] },
+  pay:{ msgs:[
+      {w:'in', t:'🔊 "Ombi la malipo limetumwa kwenye simu yako. Weka PIN yako mwenyewe - MIMI SITAWAHI kukuuliza PIN."', g:'A standard M-Pesa request pops on HIS phone. He enters his own PIN. The agent never asks for it - anti-fraud by design.'},
+      {w:'sys', t:'He enters his PIN. Payment flows directly to TRA via GePG.'},
+      {w:'in', t:'🔊 "Malipo yamekamilika ✓ Nakutumia SMS yenye kumbukumbu. Asante, Bwana Juma!"'},
+      {w:'sys', t:'✉ SMS: "Mauzo TZS 300,000 - Kodi TZS 1,650 imelipwa ✓ Salio: TZS 412,350." A written record he can show anyone - though he never wrote a word.'}
+    ], choices:[{label:'⏰ Wiki ijayo: kumbusho kwa simu (demo)', next:'remcall'},{label:'☎ Maliza simu', next:'end'}] },
+  remcall:{ msgs:[
+      {w:'sys', t:'Wiki ijayo, amesahau kulipa - he forgets a payment. First the SMS code, then the phone rings:'},
+      {w:'in', t:'🔊 "Habari Bwana Juma! Hii ni Kodi Rafiki ya TRA - kumbukumbu K-7719. Kodi ya siku 3 haijalipwa: TZS 4,950. Ungependa kulipa sasa?"', g:'The reminder that CALLS him - for a man who cannot read an SMS. Opt-in, daytime hours, pre-announced.'}
+    ], choices:[{label:'🎤 "Ndiyo, lipa."', next:'rempay'}] },
+  rempay:{ msgs:[
+      {w:'in', t:'🔊 "Nathibitisha: TZS 4,950. Ombi limetumwa - weka PIN yako. Asante! Ratiba yako imerudi sawa ✓"', g:'Confirmed aloud, paid with his own PIN, back on schedule - no penalty, no office visit, no paper.'}
+    ], choices:[{label:'☎ Maliza simu', next:'end'}] },
+  end:{ msgs:[
+      {w:'sys', t:'Call ended. Every word of it exists as an SMS record in his inbox.', endCall:true}
+    ], choices:[] }
+}}
+};
+
+/* ================= ENGINE ================= */
+const state = {};      // k -> current node id
+const busy = {};       // k -> is auto-playing
+const chatIds = {wa:'wa-chat', sms:'sms-chat', v:'v-chat'};
+let vSeconds = 0, vTimer = null;
+
+function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt !== undefined) e.textContent = txt; return e; }
+function chatOf(k){ return document.getElementById(chatIds[k]); }
+function chipsOf(k){ return document.getElementById(k + '-chips'); }
+function scrollBottom(k){ const c = chatOf(k); c.scrollTop = c.scrollHeight; }
+
+/* ---- Alama za Uzalendo (points & tiers) ---- */
+let waPoints = 0;
+const tiers = [
+  {name:'SHABA 🥉',   at:10,  unlock:'Tiketi za ziada za bahati nasibu'},
+  {name:'FEDHA 🥈',   at:30,  unlock:'Cheti cha Kodi (TCC) kiotomatiki - kwa tenda na mikopo'},
+  {name:'DHAHABU 🥇', at:60,  unlock:'Ukaguzi uliopunguzwa'},
+  {name:'TUZO YA RAIS 🏆', at:100, unlock:'Kupendekezwa Tuzo ya Rais ya Mlipakodi Bora'}
+];
+function tierOf(p){ let t = null; for(const x of tiers){ if(p >= x.at) t = x; } return t; }
+function updatePill(){ const s = document.getElementById('wa-pts'); if(s) s.textContent = waPoints; }
+function renderAward(k, m){
+  const before = tierOf(waPoints);
+  waPoints += m.pts;
+  const after = tierOf(waPoints);
+  updatePill();
+  let txt = '🏅 +' + m.pts + ' alama - ' + m.reason + '\nJumla: ' + waPoints + ' alama';
+  if(after) txt += '  •  Kiwango: ' + after.name;
+  if(after && (!before || after.at !== before.at)){
+    txt += '\n🎉 HONGERA! Umefikia ' + after.name + ' - ' + after.unlock + '!';
+  } else {
+    const nxt = tiers.find(x => waPoints < x.at);
+    if(nxt) txt += '\nZimebaki alama ' + (nxt.at - waPoints) + ' kufikia ' + nxt.name;
+  }
+  const e = el('div','award', txt);
+  const g = el('span','gloss','Every compliant act earns visible points, from the very first day - the personalised ladder to Shaba, Fedha, Dhahabu and the President\'s Award. Progress a trader can SEE.');
+  e.appendChild(g);
+  chatOf(k).appendChild(e); scrollBottom(k);
+}
+function renderTuzoCard(k){
+  const c = el('div','tuzo');
+  c.appendChild(el('div','tz-h','TUZO YA UZALENDO - ALAMA ZANGU: ' + waPoints + ' 🏅'));
+  const cur = tierOf(waPoints);
+  tiers.forEach(t => {
+    const row = el('div','trow' + ((cur && cur.at === t.at) ? ' now' : ''));
+    row.appendChild(el('span','tn', t.name + '  (alama ' + t.at + '+)'));
+    row.appendChild(el('span','tu', t.unlock + ((cur && cur.at === t.at) ? '  ◄ WEWE' : '')));
+    c.appendChild(row);
+  });
+  c.appendChild(el('div','tz-f','Unapataje alama? Kujisajili +10 • Malipo kwa wakati +5 • Kitabu cha risiti +2 • Ritani kwa wakati +10. Kila mlipakodi anayo - kuanzia siku ya kwanza.'));
+  chatOf(k).appendChild(c); scrollBottom(k);
+}
+function renderMsg(k, m){
+  const chat = chatOf(k);
+  let e;
+  if(m.w === 'award'){ renderAward(k, m); return; }
+  if(m.w === 'tuzo'){ renderTuzoCard(k); return; }
+  if(m.w === 'notif'){
+    const screen = chat.parentElement;
+    const n = el('div','notif');
+    const ic = el('div','ic','KR');
+    const nt = el('div','nt');
+    const b = el('b', null, m.title || 'Kodi Rafiki (TRA)');
+    nt.appendChild(b);
+    nt.appendChild(document.createTextNode(m.t));
+    n.appendChild(ic); n.appendChild(nt);
+    screen.appendChild(n);
+    setTimeout(() => { n.classList.add('hide'); setTimeout(() => n.remove(), 450); }, 3600);
+    return;
+  }
+  if(m.w === 'sys'){ e = el('div','sysline', m.t); }
+  else {
+    e = el('div','bubble ' + (m.w || 'in'), m.t);
+    if(m.menu){
+      const mb = el('div','menu-btns');
+      m.menu.forEach(x => {
+        const b = el('span', null, x);
+        b.onclick = () => menuClick(k, b, x);
+        mb.appendChild(b);
+      });
+      e.appendChild(mb);
+    }
+    if(m.cal){
+      const c = el('div','cal');
+      c.appendChild(el('div','cal-h', m.cal.h));
+      m.cal.rows.forEach(r => {
+        const row = el('div','row');
+        row.appendChild(el('b', null, r[0]));
+        row.appendChild(el('span', r[2]==='ok' ? 'ok' : 'due', r[2]==='ok' ? r[1]+' ✓' : r[1]));
+        c.appendChild(row);
+      });
+      c.appendChild(el('div','cal-f', m.cal.f));
+      const wrap = el('div'); wrap.style.marginTop = '8px'; wrap.appendChild(c); e.appendChild(wrap);
+    }
+    if(m.g){ e.appendChild(el('span','gloss', m.g)); }
+  }
+  chat.appendChild(e); scrollBottom(k);
+  if(m.endCall && k === 'v'){ stopCall(); }
+}
+
+function showTyping(k){
+  const t = el('div','typing','•••'); t.id = k + '-typing';
+  chatOf(k).appendChild(t); scrollBottom(k);
+}
+function hideTyping(k){ const t = document.getElementById(k + '-typing'); if(t) t.remove(); }
+
+const qaNodes = ['maswali','q','qRelief','qVat','qTuzo','qUnknown'];
+function playNode(k, id){
+  state[k] = id; busy[k] = true;
+  chipsOf(k).innerHTML = '';
+  if(k === 'wa'){
+    const row = document.getElementById('wa-inputrow');
+    if(row){ if(qaNodes.includes(id)) row.classList.add('show'); else row.classList.remove('show'); }
+  }
+  const node = flows[k].nodes[id];
+  const msgs = node.msgs;
+  let i = 0;
+  function next(){
+    if(i >= msgs.length){ busy[k] = false; renderChoices(k, node); return; }
+    const m = msgs[i++];
+    if(m.w === 'in'){
+      showTyping(k);
+      setTimeout(() => { hideTyping(k); renderMsg(k, m); setTimeout(next, 350); }, 650);
+    } else {
+      setTimeout(() => { renderMsg(k, m); setTimeout(next, 250); }, 300);
+    }
+  }
+  next();
+}
+
+function tok(s){ return (s || '').split(' ')[0].replace(/[^A-Za-z0-9]/g, '').toLowerCase(); }
+function inMenus(node, label){
+  return (node.msgs || []).some(m => (m.menu || []).some(x => x === label || (tok(x) && tok(x) === tok(label))));
+}
+function renderChoices(k, node){
+  const box = chipsOf(k);
+  box.innerHTML = '';
+  if(!node.choices || node.choices.length === 0){
+    const w = el('div','waiting','— mwisho wa mfano huu —');
+    box.appendChild(w);
+    addReset(k);
+    return;
+  }
+  node.choices.forEach(c => {
+    if(inMenus(node, c.label)) return; // option already tappable inside the message bubble - do not duplicate
+    const chip = el('button','chip', c.label);
+    chip.onclick = () => pick(k, c, chip);
+    box.appendChild(chip);
+  });
+  addReset(k);
+}
+
+function addReset(k){
+  const r = el('button','chip reset-chip','⟳ Anza upya');
+  r.onclick = () => resetPhone(k);
+  chipsOf(k).appendChild(r);
+}
+
+function pick(k, c, chipEl){
+  if(busy[k]) return;
+  // deaden all menus in chat
+  deadenMenus(k, c.label);
+  // outgoing bubble
+  const m = {w:'out', t:c.label.replace(/^([A-D]\.\s|❓\s|⏰\s|↩\s|📞\s|☎\s)/,'')};
+  if(c.gloss) m.g = c.gloss;
+  renderMsg(k, m);
+  if(c.call && k === 'v') startCall();
+  playNode(k, c.next);
+}
+
+function menuClick(k, btn, label){
+  if(busy[k]) return;
+  // find a matching choice in current node
+  const node = flows[k].nodes[state[k]];
+  if(!node || !node.choices) return;
+  const c = node.choices.find(x => x.label === label || x.label.startsWith(label.split(' ')[0]) || label.startsWith(x.label.split(' ')[0]));
+  if(!c) return;
+  btn.classList.add('chosen');
+  pick(k, c, null);
+}
+
+function deadenMenus(k, chosenLabel){
+  chatOf(k).querySelectorAll('.menu-btns span').forEach(s => {
+    if(!s.classList.contains('chosen')){
+      if(s.textContent === chosenLabel) s.classList.add('chosen');
+      else s.classList.add('dead');
+    }
+    s.onclick = null;
+  });
+}
+
+function startCall(){
+  if(vTimer) return;
+  vTimer = setInterval(() => { vSeconds++;
+    document.getElementById('v-timer').innerHTML = '&#9679; ' + String(Math.floor(vSeconds/60)).padStart(2,'0') + ':' + String(vSeconds%60).padStart(2,'0');
+  }, 1000);
+}
+function stopCall(){
+  if(vTimer){ clearInterval(vTimer); vTimer = null; }
+}
+
+function resetPhone(k){
+  chatOf(k).innerHTML = '';
+  busy[k] = false;
+  if(k === 'v'){ stopCall(); vSeconds = 0; document.getElementById('v-timer').innerHTML = '&#9679; 00:00'; }
+  if(k === 'wa'){ waPoints = 0; updatePill(); }
+  playNode(k, flows[k].start);
+}
+
+/* ================= Free-text Q&A (simulated retrieval over the TRA corpus) ================= */
+const kb = [
+  { keys:['tin','jisajili','usajili','sajili','register'],
+    t:'Kujisajili TIN ni BURE, na tunaweza kumaliza hapa hapa kwenye mazungumzo - nahitaji namba yako ya NIDA tu.\n\n📄 Chanzo: Sheria ya Usimamizi wa Kodi; Tangazo la TRA "TIN is FREE".',
+    g:'Retrieved from corpus: TIN registration. Free, via NIDA, in-conversation.' },
+  { keys:['makadirio','presumptive','nitalipa','nalipa','kiasi gani','asilimia','milioni'],
+    t:'Kodi ya makadirio (2026/27): mauzo ya TZS milioni 11 hadi 200 kwa mwaka unalipa 4% ya mauzo. Chini ya TZS milioni 4 - HULIPI. Zaidi ya milioni 200 unaingia mfumo wa kawaida.\n\n📄 Chanzo: Sheria ya Fedha 2026; Jedwali la Kwanza la Sheria ya Kodi ya Mapato.',
+    g:'Retrieved from corpus: Finance Act 2026 presumptive bands, cited by section.' },
+  { keys:['vat','ongezeko la thamani'],
+    t:'Usajili wa VAT unaanza mauzo ya TZS milioni 200 kwa mwaka (Tanzania Bara).\n\n📄 Chanzo: Sheria ya VAT, kifungu cha usajili.',
+    g:'Retrieved from corpus: VAT registration threshold, Mainland.' },
+  { keys:['risiti','efd','vfd','receipt'],
+    t:'Kila muuzaji anatakiwa kutoa risiti. Kupitia Kodi Rafiki unaweza kupata vitabu vya risiti za kielektroniki zinazotumika hata BILA mtandao - andika RISITI.\n\n📄 Chanzo: Kanuni za VFD/EFD za TRA.',
+    g:'Retrieved from corpus: receipt obligations + offline receipt codes per TRA VFD rules.' },
+  { keys:['akiba','kidogo','kila siku','instal','daily'],
+    t:'AKIBA YA KODI: badala ya kulipa kodi yote mara moja, mfumo unagawa deni lako kwa siku za biashara - mfano TZS 1,700 kwa siku badala ya TZS 600,000 mara moja. Unalipa kwa M-Pesa kwa PIN yako mwenyewe.',
+    g:'Retrieved from corpus: the micro-instalment mechanism. Trader authorises every payment.' },
+  { keys:['mwaka wa kwanza','unafuu','msamaha','holiday','relief','silipi'],
+    t:'Ndiyo! Usajili MPYA wa kodi ya makadirio unapata UNAFUU WA MWAKA WA KWANZA, kuanzia tarehe ya kupata TIN.\n\n📄 Chanzo: Sheria ya Fedha 2026 (nakala iliyogazetiwa).',
+    g:'Retrieved from corpus: first-year relief for new presumptive registrants, Finance Act 2026.' },
+  { keys:['ritani','deadline','tarehe','muda','return'],
+    t:'Ritani ya kodi ya makadirio inawasilishwa mwisho wa mwaka wa fedha. Usihofie kusahau - RATIBA yako itakukumbusha kabla ya kila tarehe muhimu. Andika RATIBA kuiona.',
+    g:'Retrieved from corpus: filing deadlines - and the calendar remembers for you.' },
+  { keys:['tuzo','bahati','lottery','uzalendo'],
+    t:'TUZO YA UZALENDO ni bahati nasibu ya TRA: kila risiti unayotoa (au kudai ukiwa mnunuzi) inakupa tiketi.\n\nUkiuza toa risiti, ukinunua dai risiti!\n\n📄 Chanzo: Tangazo la TRA / Bajeti 2026/27.',
+    g:'Retrieved from corpus: the receipt lottery - every receipt is a ticket.' },
+  { keys:['nida'],
+    t:'NIDA ni kitambulisho cha Taifa. Unahitaji namba ya NIDA kujisajili TIN. Kama huna NIDA bado, tembelea ofisi ya NIDA iliyo karibu nawe kwanza - ni bure.',
+    g:'Retrieved from corpus: NIDA is the prerequisite for TIN.' },
+  { keys:['pin','password','nywila','neno la siri'],
+    t:'⚠️ MUHIMU: Kodi Rafiki HATAWAHI kukuuliza PIN yako wala neno lako la siri - kwa ujumbe wala kwa simu. Ukiombwa PIN na mtu anayejiita TRA, huo ni ULAGHAI. Piga simu bila malipo: 0800 780 078 kuripoti.',
+    g:'The anti-fraud rule, demonstrated: the agent itself teaches users never to share a PIN.' }
+];
+function askRag(){
+  const inp = document.getElementById('wa-input');
+  const q = (inp.value || '').trim();
+  if(!q || busy['wa']) return;
+  inp.value = '';
+  renderMsg('wa', {w:'out', t:q});
+  busy['wa'] = true;
+  showTyping('wa');
+  setTimeout(() => {
+    hideTyping('wa');
+    const ql = q.toLowerCase();
+    const hit = kb.find(e => e.keys.some(key => ql.includes(key)));
+    if(hit){
+      renderMsg('wa', {w:'in', t:hit.t, g:hit.g});
+    } else {
+      renderMsg('wa', {w:'in',
+        t:'Samahani - jibu la swali hili HALIPO kwenye nyaraka za TRA nilizopewa, hivyo siwezi kubuni jibu.\n\nPiga simu bila malipo, Huduma kwa Mteja TRA: 0800 780 078, au uliza kwa maneno mengine.',
+        g:'THE HONEST REFUSAL: outside the corpus, the system declines to invent an answer and refers to TRA. The core safety promise, demonstrated.'});
+    }
+    busy['wa'] = false;
+  }, 800);
+}
+
+/* boot */
+['wa','sms','v'].forEach(k => playNode(k, flows[k].start));
+</script>
+</body>
+</html>
